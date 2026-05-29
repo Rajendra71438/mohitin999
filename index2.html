@@ -601,19 +601,19 @@
                 v.className = 'value val-glitch';
                 v.innerText = 'SYNCING';
                 if (s) s.innerText = 'FETCHING API...';
-                if (b) { b.innerText = '⏳ WAIT';
+                if (b) { b.innerText = 'EXECUTE';
                     b.disabled = true; }
                 if (r) r.style.display = 'block';
             } else if (state === 'result' && latestIssue && resStore[latestIssue.issue]) {
                 const cached = resStore[latestIssue.issue];
                 v.innerText = cached.out;
                 if (s) s.innerText = 'PRD: ' + cached.p.slice(-9);
-                if (b) { b.innerText = '🔄 REFRESH';
+                if (b) { b.innerText = 'EXECUTE';
                     b.onclick = fetchResult; }
             } else {
                 v.innerText = 'READY';
                 if (s) s.innerText = 'TAP EXECUTE';
-                if (b) { b.innerText = '⚡ EXECUTE';
+                if (b) { b.innerText = 'EXECUTE';
                     b.onclick = fetchResult; }
             }
         }
