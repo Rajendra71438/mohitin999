@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
+    <title>NEXUS DRAG · VIP PANEL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            /* dynamic viewport height for modern mobile browsers */
+            overflow: hidden;
+            background: #02050e;
+            font-family: 'Orbitron', sans-serif;
+            position: fixed;
+            inset: 0;
+        }
+
+        /* ---------- LOGIN PANEL ---------- */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 18, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+        .login-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: rgba(8, 12, 22, 0.95);
+            border: 1px solid rgba(0, 240, 255, 0.5);
+            border-radius: 28px;
+            padding: 32px 24px;
+            width: min(300px, 85vw);
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.25);
+        }
+
+        .login-card h2 {
+            font-size: clamp(18px, 5vw, 22px);
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .input-group {
+            margin: 16px 0;
+            text-align: left;
+        }
+        .input-group input {
+            width: 100%;
+            background: #0f121f;
+            border: 1px solid #2a2f44;
+            padding: 12px 16px;
+            border-radius: 40px;
+            font-family: 'Rajdhani', monospace;
+            font-size: 15px;
+            color: #0ff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .input-group input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 14px rgba(255, 215, 0, 0.5);
+        }
+        .input-group input::placeholder {
+            color: #445;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #ffd700, #00e0ff);
+            border: none;
+            padding: 13px;
+            border-radius: 40px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 14px;
+            color: #000;
+            letter-spacing: 1px;
+            transition: transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+        .login-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+        }
+
+        .error-msg {
+            color: #ff3366;
+            font-size: 12px;
+            margin-top: 12px;
+            min-height: 18px;
+            white-space: pre-line;
+        }
+
+        /* ---------- BACKGROUND SITE ---------- */
+        .background-site {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: #010409;
+            display: none;
+            /* hidden until login */;
+        }
+        .background-site.active {
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+        .background-site iframe {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            border: none;
+            display: block;
+            background: #010409;
+        }
+
+        /* ---------- FLOATING WIDGET CONTAINER ---------- */
+        #widgetRoot {
+            position: fixed;
+            z-index: 99998;
+            pointer-events: none;
+            /* allow clicks to pass through empty areas */;
+            inset: 0;
+        }
+        #widgetRoot>* {
+            pointer-events: auto;
+            /* the widget itself captures events */;
+        }
+
+        /* ---------- DRAGGABLE WIDGET ---------- */
+        .floating-widget {
+            position: fixed;
+            z-index: 99998;
+            will-change: left, top;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.8));
+            transition: none;
+            /* no transition during drag */;
+            touch-action: manipulation;
+            /* prevent browser gestures on the widget */;
+        }
+
+        /* Mini bubble */
+        #mini {
+            width: 62px;
+            height: 62px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(8, 10, 18, 0.9);
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            box-shadow: 0 0 22px rgba(0, 240, 255, 0.5), inset 0 0 8px rgba(0, 240, 255, 0.15);
+            touch-action: none;
+            /* critical: disable browser scroll/zoom on this element */;
+        }
+        #mini:active {
+            cursor: grabbing;
+        }
+        #mini img {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);
+            background: #000;
+            pointer-events: none;
+            object-fit: cover;
+        }
+
+        /* Main panel */
+        #main {
+            width: 225px;
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(10, 10, 14, 0.97);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            position: relative;
+            display: none;
+            flex-direction: column;
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            box-shadow: 0 0 50px rgba(0, 220, 255, 0.25);
+            animation: popIn 0.22s ease-out;
+            touch-action: none;
+            /* critical for drag */;
+        }
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 6px;
+        }
+        .drag-header-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: grab;
+            flex: 1;
+            padding: 4px 0;
+            touch-action: none;
+            border-radius: 6px;
+        }
+        .drag-header-area:active {
+            cursor: grabbing;
+        }
+        .title {
+            font-size: 10px;
+            color: #ffd700;
+            letter-spacing: 1.5px;
+            font-weight: 900;
+            text-shadow: 0 0 6px #ffd700;
+            white-space: nowrap;
+        }
+        .live {
+            width: 8px;
+            height: 8px;
+            min-width: 8px;
+            background: #00ffcc;
+            border-radius: 50%;
+            box-shadow: 0 0 14px #00ffcc;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 0.15;
+            }
+        }
+        .close-btn {
+            color: #ff0044;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 26px;
+            height: 26px;
+            text-align: center;
+            line-height: 26px;
+            border-radius: 50%;
+            background: rgba(255, 0, 68, 0.08);
+            transition: background 0.2s;
+            flex-shrink: 0;
+            touch-action: manipulation;
+        }
+        .close-btn:active {
+            background: rgba(255, 0, 68, 0.3);
+            transform: scale(0.9);
+        }
+
+        .display {
+            height: 95px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+            background: linear-gradient(140deg, #0a0a0a, #13161f);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f0ff, #ffd700, transparent);
+            box-shadow: 0 0 16px #00f0ff;
+            animation: scanMove 2s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scanMove {
+            0% {
+                top: 0%;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+        .proc-ring {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2.5px dashed #ffd700;
+            position: absolute;
+            animation: rotateAura 2s linear infinite;
+            display: none;
+            pointer-events: none;
+        }
+        @keyframes rotateAura {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .value {
+            font-size: 26px;
+            color: #fff;
+            text-shadow: 0 0 12px #00f0ff, 0 0 28px #00f0ff;
+            z-index: 5;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+        .val-glitch {
+            color: #ffd700;
+            animation: glitch 0.2s infinite;
+        }
+        @keyframes glitch {
+            0% {
+                transform: translate(1px, -0.5px);
+            }
+            50% {
+                transform: translate(-1px, 0.5px);
+            }
+            100% {
+                transform: translate(0);
+            }
+        }
+        .sub {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+            z-index: 5;
+        }
+        .btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #ffd700, #00f0ff);
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.5);
+            transition: transform 0.15s, box-shadow 0.2s;
+            letter-spacing: 1px;
+            touch-action: manipulation;
+        }
+        .btn:active {
+            transform: scale(0.94);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
+        }
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 9px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            color: #00f0ff;
+            opacity: 0.75;
+            letter-spacing: 0.5px;
+        }
+
+        /* ---------- RESPONSIVE ---------- */
+        @media (max-width: 380px) {
+            #main {
+                width: 200px;
+                padding: 10px;
+            }
+            #main .value {
+                font-size: 22px;
+            }
+            #main .display {
+                height: 80px;
+            }
+            #mini {
+                width: 54px;
+                height: 54px;
+            }
+            #mini img {
+                width: 38px;
+                height: 38px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN MODAL -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <h2>⚡ AUTHENTICATE ⚡</h2>
+            <div class="input-group">
+                <input type="text" id="loginUsername" placeholder="USERNAME" autocomplete="off" autocorrect="off" autocapitalize="off">
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPassword" placeholder="PASSWORD">
+            </div>
+            <button class="login-btn" id="doLoginBtn">⟁ UNLOCK PANEL ⟁</button>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+    </div>
+
+    <!-- BACKGROUND SITE (fullscreen iframe) -->
+    <div id="backgroundSite" class="background-site">
+        <iframe
+        id="bgIframe"
+        src="https://www.in999qq.com/#/register?invitationCode=586156947517"
+        allow="camera;microphone;geolocation"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation"
+        loading="eager"
+        referrerpolicy="no-referrer"
+    ></iframe>
+</div>
+
+<!-- WIDGET ROOT (floats above everything) -->
+<div id="widgetRoot"></div>
+
+<script>
+    (function() {
+        // ──────────────────────────────────────
+        // CORE WIDGET STATE & API LOGIC
+        // ──────────────────────────────────────
+        let state = 'wingo';
+        let resStore = {};
+        let latestIssue = null;
+        let isFetching = false;
+
+        function getP() {
+            const d = new Date();
+            const y = d.getUTCFullYear();
+            const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const dt = String(d.getUTCDate()).padStart(2, '0');
+            const totalMins = (d.getUTCHours() * 60) + d.getUTCMinutes();
+            return `${y}${m}${dt}1000${10001 + totalMins}`;
+        }
+
+        function getSize(n) {
+            let num = parseInt(n, 10);
+            if (isNaN(num)) {
+                let sum = String(n).split('').reduce((a, b) => a + parseInt(b, 10), 0);
+                num = sum % 10;
+            }
+            if (num >= 0 && num <= 4) return 'SMALL';
+            if (num >= 5 && num <= 9) return 'BIG';
+            return (num % 2 === 0) ? 'SMALL' : 'BIG';
+        }
+
+        function parseLatestIssue(data) {
+            let list = null;
+            if (data && data.data) {
+                if (Array.isArray(data.data)) list = data.data;
+                else if (data.data.list && Array.isArray(data.data.list)) list = data.data.list;
+                else if (data.data.rows && Array.isArray(data.data.rows)) list = data.data.rows;
+                else if (data.data.records && Array.isArray(data.data.records)) list = data.data.records;
+                else if (Array.isArray(data.data.data)) list = data.data.data;
+            }
+            if (!list && data && Array.isArray(data.list)) list = data.list;
+            if (!list && data && Array.isArray(data.rows)) list = data.rows;
+            if (!list && data && Array.isArray(data.data)) list = data.data;
+            if (!list && Array.isArray(data)) list = data;
+            if (!list || list.length === 0) return null;
+            const sorted = list.slice().sort((a, b) => {
+                let ai = a.issue || a.issueNumber || a.period || a.issueNo || a.round || '';
+                let bi = b.issue || b.issueNumber || b.period || b.issueNo || b.round || '';
+                return String(bi).localeCompare(String(ai));
+            });
+            const latest = sorted[0];
+            const issue = latest.issue || latest.issueNumber || latest.period || latest.issueNo || latest.round || 'UNKNOWN';
+            const number = latest.number || latest.result || latest.code || latest.value || latest.open || '';
+            return { issue: String(issue), number: String(number) };
+        }
+
+        async function fetchResult() {
+            if (isFetching) return;
+            isFetching = true;
+            state = 'scanning';
+            render();
+            const btn = document.getElementById('btn-exec');
+            if (btn) btn.disabled = true;
+            try {
+                const ts = Date.now();
+                const url =
+                    `https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=${ts}`;
+                const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const data = await resp.json();
+                const parsed = parseLatestIssue(data);
+                if (parsed && parsed.number && parsed.number !== '') {
+                    const sz = getSize(parsed.number);
+                    const resultStr = `${sz} ${parsed.number}`;
+                    const cacheKey = parsed.issue;
+                    if (resStore[cacheKey]) {
+                        state = 'result';
+                        latestIssue = parsed;
+                        render();
+                    } else {
+                        resStore = {};
+                        resStore[cacheKey] = { out: resultStr, p: parsed.issue, number: parsed.number,
+                            size: sz };
+                        latestIssue = parsed;
+                        state = 'result';
+                        render();
+                        // Optional speech
+                        if (window.TeamBridge && typeof window.TeamBridge.speak === 'function') {
+                            window.TeamBridge.speak(resultStr);
+                        }
+                    }
+                } else {
+                    state = 'wingo';
+                    const valDiv = document.getElementById('val');
+                    if (valDiv) valDiv.innerText = 'NO DATA';
+                    const subDiv = document.getElementById('sub');
+                    if (subDiv) subDiv.innerText = 'TRY AGAIN';
+                    render();
+                }
+            } catch (e) {
+                console.error('Fetch error:', e);
+                state = 'wingo';
+                const valDiv = document.getElementById('val');
+                if (valDiv) valDiv.innerText = 'API ERR';
+                const subDiv = document.getElementById('sub');
+                if (subDiv) subDiv.innerText = e.message || 'CHECK NET';
+                render();
+            }
+            isFetching = false;
+            if (btn) btn.disabled = false;
+            setTimeout(() => {
+                if (state === 'result' && latestIssue) render();
+            }, 300);
+        }
+
+        function openM() {
+            const mainDiv = document.getElementById('main');
+            const miniDiv = document.getElementById('mini');
+            const widget = document.getElementById('floatingWidgetInstance');
+            if (mainDiv) mainDiv.style.display = 'flex';
+            if (miniDiv) miniDiv.style.display = 'none';
+            // Ensure widget is positioned so the main panel is visible
+            if (widget) ensureWidgetOnScreen(widget);
+            render();
+        }
+
+        function closeM() {
+            const mainDiv = document.getElementById('main');
+            const miniDiv = document.getElementById('mini');
+            if (mainDiv) mainDiv.style.display = 'none';
+            if (miniDiv) miniDiv.style.display = 'flex';
+        }
+
+        function render() {
+            const v = document.getElementById('val');
+            const s = document.getElementById('sub');
+            const b = document.getElementById('btn-exec');
+            const r = document.getElementById('proc-ring');
+            if (!v) return;
+            if (r) r.style.display = 'none';
+            v.className = 'value';
+            if (b) b.disabled = false;
+            if (state === 'scanning') {
+                v.className = 'value val-glitch';
+                v.innerText = 'SYNCING';
+                if (s) s.innerText = 'FETCHING API...';
+                if (b) { b.innerText = '⏳ WAIT';
+                    b.disabled = true; }
+                if (r) r.style.display = 'block';
+            } else if (state === 'result' && latestIssue && resStore[latestIssue.issue]) {
+                const cached = resStore[latestIssue.issue];
+                v.innerText = cached.out;
+                if (s) s.innerText = 'PRD: ' + cached.p.slice(-9);
+                if (b) { b.innerText = '🔄 REFRESH';
+                    b.onclick = fetchResult; }
+            } else {
+                v.innerText = 'READY';
+                if (s) s.innerText = 'TAP EXECUTE';
+                if (b) { b.innerText = '⚡ EXECUTE';
+                    b.onclick = fetchResult; }
+            }
+        }
+
+        // Ensure the widget (especially the 225px main panel) stays within the viewport
+        function ensureWidgetOnScreen(widgetDiv) {
+            if (!widgetDiv) return;
+            const rect = widgetDiv.getBoundingClientRect();
+            const winW = window.innerWidth;
+            const winH = window.innerHeight;
+            let left = rect.left;
+            let top = rect.top;
+            const w = rect.width;
+            const h = rect.height;
+            if (left + w > winW - 8) left = Math.max(8, winW - w - 8);
+            if (left < 8) left = 8;
+            if (top + h > winH - 8) top = Math.max(8, winH - h - 8);
+            if (top < 8) top = 8;
+            widgetDiv.style.left = left + 'px';
+            widgetDiv.style.top = top + 'px';
+            widgetDiv.style.bottom = 'auto';
+            widgetDiv.style.right = 'auto';
+        }
+
+        // ──────────────────────────────────────
+        // BUILD WIDGET DOM
+        // ──────────────────────────────────────
+        function buildWidget() {
+            const widgetContainer = document.createElement('div');
+            widgetContainer.id = 'floatingWidgetInstance';
+            widgetContainer.className = 'floating-widget';
+
+            // Initial position: bottom-right with safe margins
+            const initRight = 16;
+            const initBottom = 100;
+            widgetContainer.style.right = initRight + 'px';
+            widgetContainer.style.bottom = initBottom + 'px';
+            widgetContainer.style.left = 'auto';
+            widgetContainer.style.top = 'auto';
+
+            widgetContainer.innerHTML = `
+            <div id="mini" class="drag-handle-mini">
+              <img src="mohit.jpg" alt="VIP"
+                   onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2230%22 fill=%22%23111%22 stroke=%22%23ffd700%22 stroke-width=%223%22/%3E%3Ctext x=%2232%22 y=%2238%22 text-anchor=%22middle%22 fill=%22%23ffd700%22 font-size=%2216%22 font-weight=%22bold%22%3EVIP%3C/text%3E%3C/svg%3E'">
+            </div>
+            <div id="main">
+              <div class="header">
+                <div class="drag-header-area" id="dragHeaderHandle">
+                  <div class="live"></div>
+                  <div class="title">Mohit Vip Pannel</div>
+                </div>
+                <div class="close-btn" id="customCloseBtn">✖</div>
+              </div>
+              <div class="display">
+                <div class="scan-line"></div>
+                <div id="proc-ring" class="proc-ring"></div>
+                <div id="val" class="value">READY</div>
+                <div id="sub" class="sub">TAP EXECUTE</div>
+              </div>
+              <button id="btn-exec" class="btn">⚡ EXECUTE</button>
+              <div class="footer">
+                <span>PROXY: SECURE</span>
+                <span id="ping">PING: 22ms</span>
+              </div>
+            </div>
+          `;
+
+            const root = document.getElementById('widgetRoot');
+            root.innerHTML = '';
+            root.appendChild(widgetContainer);
+
+            // Attach basic click handlers
+            const miniEl = document.getElementById('mini');
+            const closeBtn = document.getElementById('customCloseBtn');
+
+            // Mini click → open main panel (only if not dragged)
+            if (miniEl) {
+                miniEl.addEventListener('click', function(e) {
+                    // This fires only on genuine taps (not after drag)
+                    e.stopPropagation();
+                    openM();
+                });
+            }
+            // Close button
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    closeM();
+                });
+            }
+
+            // Ping simulation
+            const pingInterval = setInterval(() => {
+                const pingSpan = document.getElementById('ping');
+                if (pingSpan) pingSpan.innerText = 'PING: ' + (Math.floor(Math.random() * 28) + 14) +
+                    'ms';
+            }, 2200);
+            // Store interval ID for cleanup (optional)
+            widgetContainer._pingInterval = pingInterval;
+
+            // Initial render
+            render();
+
+            // After DOM is ready, ensure mini is visible and main is hidden
+            requestAnimationFrame(() => {
+                const m = document.getElementById('main');
+                const mi = document.getElementById('mini');
+                if (m) m.style.display = 'none';
+                if (mi) mi.style.display = 'flex';
+                // Ensure initial position works on small screens
+                ensureWidgetOnScreen(widgetContainer);
+            });
+
+            return widgetContainer;
+        }
+
+        // ──────────────────────────────────────
+        // UNIFIED DRAG SYSTEM (Pointer Events)
+        // Works perfectly on mouse AND touch
+        // ──────────────────────────────────────
+        function initDragForWidget(widgetDiv) {
+            if (!widgetDiv) return;
+
+            const miniHandle = document.getElementById('mini');
+            const headerHandle = document.getElementById('dragHeaderHandle');
+            const handles = [];
+            if (miniHandle) handles.push(miniHandle);
+            if (headerHandle) handles.push(headerHandle);
+
+            let dragInfo = null;
+            // dragInfo: { elem, startX, startY, elemLeft, elemTop, hasMoved, pointerId }
+
+            function onPointerDown(e) {
+                // Only handle on designated drag handles
+                let target = e.target;
+                let isHandle = false;
+                for (let h of handles) {
+                    if (h === target || h.contains(target)) { isHandle = true; break; }
+                }
+                if (!isHandle) return;
+                // Don't start drag if tapping close button or execute button
+                if (target.closest && (target.closest('.close-btn') || target.closest('.btn'))) return;
+                // Don't start drag if the main panel is open and we're tapping inside it (not on header)
+                const mainPanel = document.getElementById('main');
+                if (mainPanel && mainPanel.style.display !== 'none') {
+                    // Only the header area is draggable when main is open
+                    if (!headerHandle || (!headerHandle.contains(target) && headerHandle !== target)) {
+                        // If tapping mini while main is open, allow it (to re-open/close? no, just ignore drag)
+                        if (miniHandle && (miniHandle === target || miniHandle.contains(target))) {
+                            // Let click handle it
+                            return;
+                        }
+                        return;
+                    }
+                }
+
+                e.preventDefault();
+                e.stopPropagation();
+
+                const rect = widgetDiv.getBoundingClientRect();
+                const clientX = e.clientX;
+                const clientY = e.clientY;
+
+                dragInfo = {
+                    elem: widgetDiv,
+                    startX: clientX,
+                    startY: clientY,
+                    elemLeft: rect.left,
+                    elemTop: rect.top,
+                    hasMoved: false,
+                    pointerId: e.pointerId,
+                };
+
+                // Capture pointer for reliable tracking
+                if (e.target.setPointerCapture) {
+                    e.target.setPointerCapture(e.pointerId);
+                }
+            }
+
+            function onPointerMove(e) {
+                if (!dragInfo) return;
+                if (e.pointerId !== dragInfo.pointerId) return;
+
+                const deltaX = e.clientX - dragInfo.startX;
+                const deltaY = e.clientY - dragInfo.startY;
+
+                // Threshold to distinguish tap from drag
+                if (!dragInfo.hasMoved && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
+                    dragInfo.hasMoved = true;
+                }
+
+                if (dragInfo.hasMoved) {
+                    e.preventDefault();
+                    let newLeft = dragInfo.elemLeft + deltaX;
+                    let newTop = dragInfo.elemTop + deltaY;
+                    const winW = window.innerWidth;
+                    const winH = window.innerHeight;
+                    const w = dragInfo.elem.offsetWidth;
+                    const h = dragInfo.elem.offsetHeight;
+                    newLeft = Math.min(Math.max(newLeft, 5), winW - w - 5);
+                    newTop = Math.min(Math.max(newTop, 5), winH - h - 5);
+                    dragInfo.elem.style.left = newLeft + 'px';
+                    dragInfo.elem.style.top = newTop + 'px';
+                    dragInfo.elem.style.bottom = 'auto';
+                    dragInfo.elem.style.right = 'auto';
+                }
+            }
+
+            function onPointerUp(e) {
+                if (!dragInfo) return;
+                if (e.pointerId !== dragInfo.pointerId) return;
+
+                // Release pointer capture
+                if (e.target.releasePointerCapture) {
+                    try { e.target.releasePointerCapture(e.pointerId); } catch (ex) { /* ignore */ }
+                }
+
+                // If it was a genuine drag (moved), prevent the subsequent click
+                if (dragInfo.hasMoved) {
+                    // Add a temporary listener to suppress click after drag
+                    const suppressClick = function(ev) {
+                        ev.stopPropagation();
+                        ev.preventDefault();
+                        widgetDiv.removeEventListener('click', suppressClick, true);
+                    };
+                    widgetDiv.addEventListener('click', suppressClick, true);
+                    // Also suppress on the specific handle
+                    if (dragInfo.elem) {
+                        dragInfo.elem.addEventListener('click', suppressClick, true);
+                        setTimeout(() => {
+                            if (dragInfo.elem) dragInfo.elem.removeEventListener('click', suppressClick,
+                                true);
+                        }, 100);
+                    }
+                }
+                // If it was a tap (no movement), the browser's click event will fire naturally
+                // which triggers openM() or other click handlers
+
+                dragInfo = null;
+            }
+
+            function onPointerCancel(e) {
+                if (!dragInfo) return;
+                if (e.pointerId !== dragInfo.pointerId) return;
+                dragInfo = null;
+            }
+
+            // Attach pointerdown to each handle
+            for (let h of handles) {
+                if (!h) continue;
+                h.addEventListener('pointerdown', onPointerDown);
+                h.style.touchAction = 'none';
+                h.style.cursor = 'grab';
+            }
+
+            // Attach move/up/cancel to the widget container (or window for reliability)
+            widgetDiv.addEventListener('pointermove', onPointerMove);
+            widgetDiv.addEventListener('pointerup', onPointerUp);
+            widgetDiv.addEventListener('pointercancel', onPointerCancel);
+            widgetDiv.addEventListener('lostpointercapture', onPointerCancel);
+
+            // Also listen on window for cases where pointer moves outside the widget
+            window.addEventListener('pointermove', function(e) {
+                if (dragInfo && e.pointerId === dragInfo.pointerId) {
+                    onPointerMove(e);
+                }
+            });
+            window.addEventListener('pointerup', function(e) {
+                if (dragInfo && e.pointerId === dragInfo.pointerId) {
+                    onPointerUp(e);
+                }
+            });
+        }
+
+        // ──────────────────────────────────────
+        // LOGIN HANDLER
+        // ──────────────────────────────────────
+        const loginOverlay = document.getElementById('loginOverlay');
+        const loginBtn = document.getElementById('doLoginBtn');
+        const usernameField = document.getElementById('loginUsername');
+        const passwordField = document.getElementById('loginPassword');
+        const errorSpan = document.getElementById('loginError');
+        const backgroundSite = document.getElementById('backgroundSite');
+        const bgIframe = document.getElementById('bgIframe');
+
+        function performLogin() {
+            const user = usernameField.value.trim();
+            const pass = passwordField.value.trim();
+            if (user === 'mohit' && pass === 'mohit123') {
+                // Hide login
+                loginOverlay.classList.add('hidden');
+                // Show background site
+                backgroundSite.classList.add('active');
+                // Reload iframe to ensure it loads fresh
+                if (bgIframe) {
+                    const src = bgIframe.src;
+                    bgIframe.src = '';
+                    requestAnimationFrame(() => {
+                        bgIframe.src = src;
+                    });
+                }
+                // Build widget and initialize drag
+                const widgetDiv = buildWidget();
+                // Small delay to ensure DOM is settled
+                setTimeout(() => {
+                    initDragForWidget(widgetDiv);
+                    ensureWidgetOnScreen(widgetDiv);
+                }, 150);
+
+                // Attempt to go fullscreen (for mini-app contexts)
+                tryFullscreen();
+
+                // Initial render
+                render();
+            } else {
+                errorSpan.innerText = '⛔ ACCESS DENIED ⛔\nUse admin / admin123';
+                // Shake animation
+                loginBtn.style.animation = 'none';
+                loginBtn.offsetHeight;
+                loginBtn.style.animation = 'shake 0.4s ease';
+            }
+        }
+
+        function tryFullscreen() {
+            // Try standard fullscreen API
+            const docEl = document.documentElement;
+            if (docEl.requestFullscreen) {
+                docEl.requestFullscreen().catch(() => {});
+            } else if (docEl.webkitRequestFullscreen) {
+                docEl.webkitRequestFullscreen();
+            }
+            // For Telegram Mini App
+            if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.expand ===
+                'function') {
+                window.Telegram.WebApp.expand();
+            }
+            // General: set body height to available viewport
+            document.body.style.height = '100dvh';
+            document.body.style.width = '100vw';
+        }
+
+        // Attach login listeners
+        loginBtn.addEventListener('click', performLogin);
+        usernameField.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
+        passwordField.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
+
+        // Add shake keyframe dynamically
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+          @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+          }
+        `;
+        document.head.appendChild(shakeStyle);
+
+        // ──────────────────────────────────────
+        // INITIAL SETUP
+        // ──────────────────────────────────────
+        // On page load, ensure login is visible
+        loginOverlay.classList.remove('hidden');
+        backgroundSite.classList.remove('active');
+
+        // Handle window resize to keep widget on screen
+        window.addEventListener('resize', () => {
+            const widget = document.getElementById('floatingWidgetInstance');
+            if (widget) {
+                ensureWidgetOnScreen(widget);
+            }
+        });
+
+        // Handle orientation change on mobile
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => {
+                const widget = document.getElementById('floatingWidgetInstance');
+                if (widget) {
+                    ensureWidgetOnScreen(widget);
+                }
+                // Re-trigger fullscreen attempt
+                tryFullscreen();
+            }, 400);
+        });
+
+        console.log('%c🔐 NEXUS DRAG VIP PANEL %cREADY',
+            'color:#ffd700;font-size:16px;', 'color:#0ff;');
+        console.log('%cCredentials: admin / admin123', 'color:#aaa;font-size:11px;');
+    })();
+</script>
+</body>
+</html>
