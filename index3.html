@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
+    <title>MOHIT VIP PANEL</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background: #02050e;
+            font-family: 'Orbitron', sans-serif;
+            position: fixed;
+            inset: 0;
+        }
+
+        /* ---------- LOGIN ---------- */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(2, 6, 18, 0.98);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.35s ease, visibility 0.35s ease;
+        }
+        .login-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .login-card {
+            background: rgba(8, 12, 22, 0.95);
+            border: 1px solid rgba(0, 240, 255, 0.5);
+            border-radius: 28px;
+            padding: 32px 24px;
+            width: min(300px, 85vw);
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.25);
+        }
+        .login-card h2 {
+            font-size: clamp(18px, 5vw, 22px);
+            color: #ffd700;
+            text-shadow: 0 0 10px #ffd700;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+        .input-group {
+            margin: 16px 0;
+            text-align: left;
+        }
+        .input-group input {
+            width: 100%;
+            background: #0f121f;
+            border: 1px solid #2a2f44;
+            padding: 12px 16px;
+            border-radius: 40px;
+            font-family: 'Rajdhani', monospace;
+            font-size: 15px;
+            color: #0ff;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        .input-group input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 14px rgba(255, 215, 0, 0.5);
+        }
+        .input-group input::placeholder {
+            color: #445;
+        }
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #ffd700, #00e0ff);
+            border: none;
+            padding: 13px;
+            border-radius: 40px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 14px;
+            color: #000;
+            letter-spacing: 1px;
+            transition: transform 0.15s, box-shadow 0.2s;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+        .login-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+        }
+        .error-msg {
+            color: #ff3366;
+            font-size: 12px;
+            margin-top: 12px;
+            min-height: 18px;
+            white-space: pre-line;
+        }
+
+        /* ---------- BACKGROUND LAYER ---------- */
+        .background-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: #010409;
+            display: none;
+        }
+        .background-layer.active {
+            display: flex;
+            align-items: stretch;
+            justify-content: stretch;
+        }
+        .background-layer iframe {
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
+            border: none;
+            display: block;
+            background: #010409;
+        }
+
+        /* ---------- FALLBACK MODAL (only when iframe fails) ---------- */
+        .fallback-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            background: radial-gradient(ellipse at center, #0a0f1c 0%, #010409 100%);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            color: white;
+            text-align: center;
+        }
+        .fallback-glow {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: pulseGlow 2.5s ease-in-out infinite;
+        }
+        @keyframes pulseGlow {
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.5;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.6);
+                opacity: 0.15;
+            }
+        }
+        .fallback-logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(16px, 4vw, 22px);
+            color: #ffd700;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px #ffd700;
+            letter-spacing: 3px;
+            z-index: 2;
+        }
+        .fallback-btn {
+            z-index: 2;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            font-size: 14px;
+            cursor: pointer;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: #000;
+            border: none;
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.5);
+            transition: transform 0.2s;
+            text-transform: uppercase;
+        }
+        .fallback-btn:active {
+            transform: scale(0.92);
+        }
+
+        /* ---------- FLOATING WIDGET ---------- */
+        #widgetRoot {
+            position: fixed;
+            z-index: 99998;
+            pointer-events: none;
+            inset: 0;
+        }
+        #widgetRoot>* {
+            pointer-events: auto;
+        }
+
+        .floating-widget {
+            position: fixed;
+            z-index: 99998;
+            will-change: left, top;
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.8));
+            transition: none;
+            touch-action: manipulation;
+        }
+        #mini {
+            width: 62px;
+            height: 62px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(8, 10, 18, 0.9);
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            box-shadow: 0 0 22px rgba(0, 240, 255, 0.5), inset 0 0 8px rgba(0, 240, 255, 0.15);
+            touch-action: none;
+        }
+        #mini:active {
+            cursor: grabbing;
+        }
+        #mini img {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 2px solid #ffd700;
+            box-shadow: 0 0 16px rgba(0, 240, 255, 0.7);
+            background: #000;
+            pointer-events: none;
+            object-fit: cover;
+        }
+        #main {
+            width: 225px;
+            padding: 14px;
+            border-radius: 16px;
+            background: rgba(10, 10, 14, 0.97);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            position: relative;
+            display: none;
+            flex-direction: column;
+            border: 1px solid rgba(255, 215, 0, 0.35);
+            box-shadow: 0 0 50px rgba(0, 220, 255, 0.25);
+            animation: popIn 0.22s ease-out;
+            touch-action: none;
+        }
+        @keyframes popIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 6px;
+        }
+        .drag-header-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: grab;
+            flex: 1;
+            padding: 4px 0;
+            touch-action: none;
+            border-radius: 6px;
+        }
+        .drag-header-area:active {
+            cursor: grabbing;
+        }
+        .title {
+            font-size: 10px;
+            color: #ffd700;
+            letter-spacing: 1.5px;
+            font-weight: 900;
+            text-shadow: 0 0 6px #ffd700;
+            white-space: nowrap;
+        }
+        .live {
+            width: 8px;
+            height: 8px;
+            min-width: 8px;
+            background: #00ffcc;
+            border-radius: 50%;
+            box-shadow: 0 0 14px #00ffcc;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            50% {
+                opacity: 0.15;
+            }
+        }
+        .close-btn {
+            color: #ff0044;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            width: 26px;
+            height: 26px;
+            text-align: center;
+            line-height: 26px;
+            border-radius: 50%;
+            background: rgba(255, 0, 68, 0.08);
+            transition: background 0.2s;
+            flex-shrink: 0;
+            touch-action: manipulation;
+        }
+        .close-btn:active {
+            background: rgba(255, 0, 68, 0.3);
+            transform: scale(0.9);
+        }
+        .display {
+            height: 95px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            position: relative;
+            background: linear-gradient(140deg, #0a0a0a, #13161f);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00f0ff, #ffd700, transparent);
+            box-shadow: 0 0 16px #00f0ff;
+            animation: scanMove 2s linear infinite;
+            pointer-events: none;
+        }
+        @keyframes scanMove {
+            0% {
+                top: 0%;
+            }
+            100% {
+                top: 100%;
+            }
+        }
+        .proc-ring {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2.5px dashed #ffd700;
+            position: absolute;
+            animation: rotateAura 2s linear infinite;
+            display: none;
+            pointer-events: none;
+        }
+        @keyframes rotateAura {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+        .value {
+            font-size: 26px;
+            color: #fff;
+            text-shadow: 0 0 12px #00f0ff, 0 0 28px #00f0ff;
+            z-index: 5;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: color 0.2s;
+        }
+        .val-glitch {
+            color: #ffd700;
+            animation: glitch 0.2s infinite;
+        }
+        @keyframes glitch {
+            0% {
+                transform: translate(1px, -0.5px);
+            }
+            50% {
+                transform: translate(-1px, 0.5px);
+            }
+            100% {
+                transform: translate(0);
+            }
+        }
+        .sub {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 10px;
+            color: #aaa;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+            z-index: 5;
+        }
+        .btn {
+            width: 100%;
+            padding: 11px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #ffd700, #00f0ff);
+            color: #000;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 18px rgba(0, 240, 255, 0.5);
+            transition: transform 0.15s, box-shadow 0.2s;
+            letter-spacing: 1px;
+            touch-action: manipulation;
+        }
+        .btn:active {
+            transform: scale(0.94);
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.8);
+        }
+        .btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 9px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 9px;
+            color: #00f0ff;
+            opacity: 0.75;
+            letter-spacing: 0.5px;
+        }
+
+        @media (max-width: 380px) {
+            #main {
+                width: 200px;
+                padding: 10px;
+            }
+            #main .value {
+                font-size: 22px;
+            }
+            #main .display {
+                height: 80px;
+            }
+            #mini {
+                width: 54px;
+                height: 54px;
+            }
+            #mini img {
+                width: 38px;
+                height: 38px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN -->
+    <div id="loginOverlay" class="login-overlay">
+        <div class="login-card">
+            <h2>LOGIN PAGE</h2>
+            <div class="input-group">
+                <input type="text" id="loginUsername" placeholder="USERNAME" autocomplete="off" autocorrect="off" autocapitalize="off">
+            </div>
+            <div class="input-group">
+                <input type="password" id="loginPassword" placeholder="PASSWORD">
+            </div>
+            <button class="login-btn" id="doLoginBtn">LOGIN</button>
+            <div id="loginError" class="error-msg"></div>
+        </div>
+    </div>
+
+    <!-- BACKGROUND: iframe (tries to load directly) -->
+    <div id="backgroundLayer" class="background-layer"></div>
+
+    <!-- FALLBACK MODAL (only if iframe fails) -->
+    <div id="fallbackModal" class="fallback-modal">
+        <div class="fallback-glow"></div>
+        <div class="fallback-logo">⚡ IN999 SITE ⚡</div>
+        <button class="fallback-btn" id="fallbackOpenBtn">OPEN SITE NOW</button>
+    </div>
+
+    <!-- WIDGET ROOT -->
+    <div id="widgetRoot"></div>
+
+    <script>
+        (function() {
+            // ──────────────────────────────────────
+            // TARGET URL
+            // ──────────────────────────────────────
+            const TARGET_URL = 'https://www.in999qq.com/#/register?invitationCode=586156947517';
+
+            // ──────────────────────────────────────
+            // TELEGRAM INIT
+            // ──────────────────────────────────────
+            if (window.Telegram?.WebApp) {
+                try {
+                    const tg = window.Telegram.WebApp;
+                    tg.ready();
+                    tg.expand();
+                } catch(e) {}
+            }
+
+            // ──────────────────────────────────────
+            // BACKGROUND LOADER (client‑side proxy via srcdoc)
+            // ──────────────────────────────────────
+            const backgroundLayer = document.getElementById('backgroundLayer');
+            const fallbackModal = document.getElementById('fallbackModal');
+            let iframeLoadAttempted = false;
+
+            async function tryLoadSiteDirectly() {
+                if (iframeLoadAttempted) return;
+                iframeLoadAttempted = true;
+
+                // First attempt: normal iframe (works on desktop)
+                const normalIframe = document.createElement('iframe');
+                normalIframe.src = TARGET_URL;
+                normalIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-top-navigation');
+                normalIframe.setAttribute('allow', 'camera;microphone;geolocation;autoplay');
+                normalIframe.setAttribute('loading', 'eager');
+                normalIframe.style.cssText = 'width:100%;height:100%;height:100dvh;border:none;display:block;background:#010409;';
+                backgroundLayer.innerHTML = '';
+                backgroundLayer.appendChild(normalIframe);
+
+                // Detect if iframe loaded (cross-origin, so we use a timeout trick)
+                let iframeLoaded = false;
+                const loadHandler = () => { iframeLoaded = true; };
+                normalIframe.addEventListener('load', loadHandler, { once: true });
+
+                // After 3 seconds, if not loaded, try the proxy method
+                setTimeout(() => {
+                    if (!iframeLoaded) {
+                        normalIframe.removeEventListener('load', loadHandler);
+                        attemptProxyLoad();
+                    }
+                }, 3000);
+            }
+
+            async function attemptProxyLoad() {
+                // Try to fetch the HTML of the target site (requires CORS)
+                try {
+                    const resp = await fetch(TARGET_URL, { mode: 'cors', cache: 'no-cache' });
+                    if (resp.ok) {
+                        const html = await resp.text();
+                        // Create a blob URL to bypass some restrictions
+                        const blob = new Blob([html], { type: 'text/html' });
+                        const blobUrl = URL.createObjectURL(blob);
+
+                        const proxyIframe = document.createElement('iframe');
+                        proxyIframe.src = blobUrl;
+                        proxyIframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox');
+                        proxyIframe.style.cssText = 'width:100%;height:100%;height:100dvh;border:none;display:block;background:#010409;';
+                        backgroundLayer.innerHTML = '';
+                        backgroundLayer.appendChild(proxyIframe);
+                        console.log('✅ Loaded via proxy (srcdoc/blob)');
+                        return;
+                    }
+                } catch(e) {
+                    console.warn('Proxy fetch failed (CORS or network):', e);
+                }
+                // If proxy fails, show fallback modal
+                showFallback();
+            }
+
+            function showFallback() {
+                backgroundLayer.innerHTML = '';
+                fallbackModal.style.display = 'flex';
+                // Attach open button
+                document.getElementById('fallbackOpenBtn').addEventListener('click', openSiteExternally);
+            }
+
+            function openSiteExternally() {
+                // Try Telegram native
+                if (window.Telegram?.WebApp?.openLink) {
+                    try {
+                        window.Telegram.WebApp.openLink(TARGET_URL, { try_instant_view: false });
+                        return;
+                    } catch(e) {}
+                }
+                // Fallback window.open
+                const win = window.open(TARGET_URL, '_blank', 'noopener,noreferrer');
+                if (!win || win.closed) {
+                    alert('Pop-up blocked! Opening directly...');
+                    window.location.href = TARGET_URL;
+                }
+            }
+
+            // ──────────────────────────────────────
+            // WIDGET API (unchanged)
+            // ──────────────────────────────────────
+            let state = 'wingo';
+            let resStore = {};
+            let latestIssue = null;
+            let isFetching = false;
+
+            function getP() {
+                const d = new Date();
+                const y = d.getUTCFullYear();
+                const m = String(d.getUTCMonth() + 1).padStart(2, '0');
+                const dt = String(d.getUTCDate()).padStart(2, '0');
+                const totalMins = (d.getUTCHours() * 60) + d.getUTCMinutes();
+                return `${y}${m}${dt}1000${10001 + totalMins}`;
+            }
+
+            function getSize(n) {
+                let num = parseInt(n, 10);
+                if (isNaN(num)) {
+                    let sum = String(n).split('').reduce((a, b) => a + parseInt(b, 10), 0);
+                    num = sum % 10;
+                }
+                if (num >= 0 && num <= 4) return 'SMALL';
+                if (num >= 5 && num <= 9) return 'BIG';
+                return (num % 2 === 0) ? 'SMALL' : 'BIG';
+            }
+
+            function parseLatestIssue(data) {
+                let list = null;
+                if (data?.data) {
+                    if (Array.isArray(data.data)) list = data.data;
+                    else if (data.data.list) list = data.data.list;
+                    else if (data.data.rows) list = data.data.rows;
+                    else if (data.data.records) list = data.data.records;
+                    else if (Array.isArray(data.data.data)) list = data.data.data;
+                }
+                if (!list && data?.list) list = data.list;
+                if (!list && data?.rows) list = data.rows;
+                if (!list && data?.data) list = data.data;
+                if (!list && Array.isArray(data)) list = data;
+                if (!list?.length) return null;
+                const sorted = list.slice().sort((a, b) => {
+                    let ai = a.issue || a.issueNumber || a.period || a.issueNo || a.round || '';
+                    let bi = b.issue || b.issueNumber || b.period || b.issueNo || b.round || '';
+                    return String(bi).localeCompare(String(ai));
+                });
+                const latest = sorted[0];
+                const issue = latest.issue || latest.issueNumber || latest.period || latest.issueNo || latest.round || 'UNKNOWN';
+                const number = latest.number || latest.result || latest.code || latest.value || latest.open || '';
+                return { issue: String(issue), number: String(number) };
+            }
+
+            async function fetchResult() {
+                if (isFetching) return;
+                isFetching = true;
+                state = 'scanning';
+                render();
+                const btn = document.getElementById('btn-exec');
+                if (btn) btn.disabled = true;
+                try {
+                    const ts = Date.now();
+                    const url = `https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=${ts}`;
+                    const resp = await fetch(url, { method: 'GET', mode: 'cors', cache: 'no-cache' });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                    const data = await resp.json();
+                    const parsed = parseLatestIssue(data);
+                    if (parsed?.number) {
+                        const sz = getSize(parsed.number);
+                        const resultStr = `${sz} ${parsed.number}`;
+                        const cacheKey = parsed.issue;
+                        if (!resStore[cacheKey]) {
+                            resStore = {};
+                            resStore[cacheKey] = { out: resultStr, p: parsed.issue, number: parsed.number, size: sz };
+                        }
+                        latestIssue = parsed;
+                        state = 'result';
+                        render();
+                    } else {
+                        state = 'wingo';
+                        render();
+                    }
+                } catch(e) {
+                    state = 'wingo';
+                    render();
+                }
+                isFetching = false;
+                if (btn) btn.disabled = false;
+            }
+
+            function openM() {
+                document.getElementById('main').style.display = 'flex';
+                document.getElementById('mini').style.display = 'none';
+                ensureWidgetOnScreen(document.getElementById('floatingWidgetInstance'));
+                render();
+            }
+
+            function closeM() {
+                document.getElementById('main').style.display = 'none';
+                document.getElementById('mini').style.display = 'flex';
+            }
+
+            function render() {
+                const v = document.getElementById('val');
+                const s = document.getElementById('sub');
+                const b = document.getElementById('btn-exec');
+                const r = document.getElementById('proc-ring');
+                if (!v) return;
+                if (r) r.style.display = 'none';
+                v.className = 'value';
+                if (b) b.disabled = false;
+                if (state === 'scanning') {
+                    v.className = 'value val-glitch';
+                    v.innerText = 'SYNCING';
+                    if (s) s.innerText = 'FETCHING API...';
+                    if (b) { b.innerText = 'EXECUTE'; b.disabled = true; }
+                    if (r) r.style.display = 'block';
+                } else if (state === 'result' && latestIssue && resStore[latestIssue.issue]) {
+                    const cached = resStore[latestIssue.issue];
+                    v.innerText = cached.out;
+                    if (s) s.innerText = 'PRD: ' + cached.p.slice(-9);
+                    if (b) b.onclick = fetchResult;
+                } else {
+                    v.innerText = 'READY';
+                    if (s) s.innerText = 'TAP EXECUTE';
+                    if (b) b.onclick = fetchResult;
+                }
+            }
+
+            function ensureWidgetOnScreen(widgetDiv) {
+                if (!widgetDiv) return;
+                const rect = widgetDiv.getBoundingClientRect();
+                const winW = window.innerWidth;
+                const winH = window.innerHeight;
+                let left = rect.left || winW - 80;
+                let top = rect.top || winH - 180;
+                const w = rect.width || 62;
+                const h = rect.height || 62;
+                if (left + w > winW - 8) left = Math.max(8, winW - w - 8);
+                if (left < 8) left = 8;
+                if (top + h > winH - 8) top = Math.max(8, winH - h - 8);
+                if (top < 8) top = 8;
+                widgetDiv.style.left = left + 'px';
+                widgetDiv.style.top = top + 'px';
+                widgetDiv.style.bottom = 'auto';
+                widgetDiv.style.right = 'auto';
+            }
+
+            // ──────────────────────────────────────
+            // BUILD WIDGET
+            // ──────────────────────────────────────
+            function buildWidget() {
+                const widgetContainer = document.createElement('div');
+                widgetContainer.id = 'floatingWidgetInstance';
+                widgetContainer.className = 'floating-widget';
+                widgetContainer.style.right = '16px';
+                widgetContainer.style.bottom = '100px';
+                widgetContainer.innerHTML = `
+                <div id="mini" class="drag-handle-mini">
+                  <img src="mohit.jpg" alt="VIP"
+                       onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2264%22 height=%2264%22%3E%3Ccircle cx=%2232%22 cy=%2232%22 r=%2230%22 fill=%22%23111%22 stroke=%22%23ffd700%22 stroke-width=%223%22/%3E%3Ctext x=%2232%22 y=%2238%22 text-anchor=%22middle%22 fill=%22%23ffd700%22 font-size=%2216%22 font-weight=%22bold%22%3EVIP%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div id="main">
+                  <div class="header">
+                    <div class="drag-header-area" id="dragHeaderHandle">
+                      <div class="live"></div>
+                      <div class="title">Mohit Vip Pannel</div>
+                    </div>
+                    <div class="close-btn" id="customCloseBtn">✖</div>
+                  </div>
+                  <div class="display">
+                    <div class="scan-line"></div>
+                    <div id="proc-ring" class="proc-ring"></div>
+                    <div id="val" class="value">READY</div>
+                    <div id="sub" class="sub">TAP EXECUTE</div>
+                  </div>
+                  <button id="btn-exec" class="btn">⚡ EXECUTE</button>
+                  <div class="footer">
+                    <span>PROXY: SECURE</span>
+                    <span id="ping">PING: 22ms</span>
+                  </div>
+                </div>`;
+
+                document.getElementById('widgetRoot').appendChild(widgetContainer);
+
+                document.getElementById('mini').addEventListener('click', (e) => { e.stopPropagation(); openM(); });
+                document.getElementById('customCloseBtn').addEventListener('click', (e) => { e.stopPropagation(); closeM(); });
+
+                setInterval(() => {
+                    const p = document.getElementById('ping');
+                    if (p) p.innerText = 'PING: ' + (Math.floor(Math.random() * 28) + 14) + 'ms';
+                }, 2200);
+
+                render();
+                requestAnimationFrame(() => {
+                    document.getElementById('main').style.display = 'none';
+                    document.getElementById('mini').style.display = 'flex';
+                    ensureWidgetOnScreen(widgetContainer);
+                });
+
+                return widgetContainer;
+            }
+
+            // ──────────────────────────────────────
+            // DRAG SYSTEM (unchanged)
+            // ──────────────────────────────────────
+            function initDrag(widgetDiv) {
+                const handles = [document.getElementById('mini'), document.getElementById('dragHeaderHandle')].filter(Boolean);
+                let dragInfo = null;
+
+                function onPointerDown(e) {
+                    let target = e.target;
+                    if (!handles.some(h => h === target || h.contains(target))) return;
+                    if (target.closest?.('.close-btn') || target.closest?.('.btn')) return;
+                    const main = document.getElementById('main');
+                    if (main?.style.display !== 'none' && !document.getElementById('dragHeaderHandle')?.contains(target)) return;
+
+                    e.preventDefault();
+                    const rect = widgetDiv.getBoundingClientRect();
+                    dragInfo = {
+                        elem: widgetDiv,
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        elemLeft: rect.left,
+                        elemTop: rect.top,
+                        hasMoved: false,
+                        pointerId: e.pointerId
+                    };
+                    if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
+                }
+
+                function onPointerMove(e) {
+                    if (!dragInfo || e.pointerId !== dragInfo.pointerId) return;
+                    const dx = e.clientX - dragInfo.startX;
+                    const dy = e.clientY - dragInfo.startY;
+                    if (!dragInfo.hasMoved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) dragInfo.hasMoved = true;
+                    if (dragInfo.hasMoved) {
+                        let l = dragInfo.elemLeft + dx;
+                        let t = dragInfo.elemTop + dy;
+                        const w = widgetDiv.offsetWidth;
+                        const h = widgetDiv.offsetHeight;
+                        l = Math.min(Math.max(l, 5), window.innerWidth - w - 5);
+                        t = Math.min(Math.max(t, 5), window.innerHeight - h - 5);
+                        widgetDiv.style.left = l + 'px';
+                        widgetDiv.style.top = t + 'px';
+                        widgetDiv.style.bottom = 'auto';
+                        widgetDiv.style.right = 'auto';
+                    }
+                }
+
+                function onPointerUp(e) {
+                    if (!dragInfo || e.pointerId !== dragInfo.pointerId) return;
+                    if (e.target.releasePointerCapture) e.target.releasePointerCapture(e.pointerId);
+                    if (dragInfo.hasMoved) {
+                        const suppress = (ev) => { ev.stopPropagation(); ev.preventDefault(); widgetDiv.removeEventListener('click', suppress, true); };
+                        widgetDiv.addEventListener('click', suppress, true);
+                    }
+                    dragInfo = null;
+                }
+
+                handles.forEach(h => {
+                    h.addEventListener('pointerdown', onPointerDown);
+                    h.style.touchAction = 'none';
+                });
+                widgetDiv.addEventListener('pointermove', onPointerMove);
+                widgetDiv.addEventListener('pointerup', onPointerUp);
+                window.addEventListener('pointermove', (e) => { if (dragInfo && e.pointerId === dragInfo.pointerId) onPointerMove(e); });
+                window.addEventListener('pointerup', (e) => { if (dragInfo && e.pointerId === dragInfo.pointerId) onPointerUp(e); });
+            }
+
+            // ──────────────────────────────────────
+            // LOGIN
+            // ──────────────────────────────────────
+            const loginOverlay = document.getElementById('loginOverlay');
+            const loginBtn = document.getElementById('doLoginBtn');
+            const userField = document.getElementById('loginUsername');
+            const passField = document.getElementById('loginPassword');
+            const errorSpan = document.getElementById('loginError');
+
+            function performLogin() {
+                if (userField.value.trim() === 'mohit' && passField.value.trim() === 'mohit123') {
+                    loginOverlay.classList.add('hidden');
+                    backgroundLayer.classList.add('active');
+                    // Try to load site directly (iframe + proxy fallback)
+                    tryLoadSiteDirectly();
+                    // Build floating widget
+                    const widget = buildWidget();
+                    setTimeout(() => initDrag(widget), 150);
+                } else {
+                    errorSpan.innerText = '⛔ ACCESS DENIED ⛔\nUse mohit / mohit123';
+                    loginBtn.style.animation = 'none';
+                    loginBtn.offsetHeight;
+                    loginBtn.style.animation = 'shake 0.4s ease';
+                }
+            }
+
+            loginBtn.addEventListener('click', performLogin);
+            userField.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
+            passField.addEventListener('keypress', (e) => { if (e.key === 'Enter') performLogin(); });
+
+            const shakeStyle = document.createElement('style');
+            shakeStyle.textContent = `@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}`;
+            document.head.appendChild(shakeStyle);
+
+            window.addEventListener('resize', () => {
+                const w = document.getElementById('floatingWidgetInstance');
+                if (w) ensureWidgetOnScreen(w);
+            });
+        })();
+    </script>
+</body>
+</html>
