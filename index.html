@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>NEXUS DRAG · VIP PANEL</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    body {
+      background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
+      min-height: 100vh;
+      font-family: 'Orbitron', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ---------- LOGIN PANEL ---------- */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 18, 0.98);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: all 0.3s ease;
+    }
+
+    .login-card {
+      background: rgba(8, 12, 22, 0.95);
+      border: 1px solid rgba(0, 240, 255, 0.5);
+      border-radius: 28px;
+      padding: 32px 28px;
+      width: 300px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+    }
+
+    .login-card h2 {
+      font-size: 22px;
+      color: #ffd700;
+      text-shadow: 0 0 8px #ffd700;
+      margin-bottom: 20px;
+    }
+
+    .input-group {
+      margin: 20px 0;
+      text-align: left;
+    }
+
+    .input-group input {
+      width: 100%;
+      background: #0f121f;
+      border: 1px solid #2a2f44;
+      padding: 12px 15px;
+      border-radius: 40px;
+      font-family: 'Rajdhani', monospace;
+      font-size: 14px;
+      color: #0ff;
+      outline: none;
+    }
+
+    .input-group input:focus {
+      border-color: #ffd700;
+      box-shadow: 0 0 12px #ffd700;
+    }
+
+    .login-btn {
+      width: 100%;
+      background: linear-gradient(90deg, #ffd700, #00f0ff);
+      border: none;
+      padding: 12px;
+      border-radius: 40px;
+      font-family: 'Orbitron', monospace;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+
+    .login-btn:active {
+      transform: scale(0.96);
+    }
+
+    .error-msg {
+      color: #ff3366;
+      font-size: 11px;
+      margin-top: 12px;
+    }
+
+    /* ---------- BACKGROUND SITE ---------- */
+    .background-site {
+      position: fixed;
+      inset: 0;
+      background-image: linear-gradient(rgba(0, 20, 40, 0.85), rgba(0, 0, 0, 0.9)), repeating-linear-gradient(0deg, rgba(0,255,200,0.05) 0px, rgba(0,255,200,0.05) 2px, transparent 2px, transparent 8px);
+      overflow-y: auto;
+      z-index: 1;
+      padding: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .bg-content {
+      max-width: 900px;
+      background: rgba(0,0,0,0.55);
+      backdrop-filter: blur(10px);
+      border-radius: 42px;
+      padding: 32px;
+      border: 1px solid rgba(0,240,255,0.4);
+      text-align: center;
+      color: #ccf;
+    }
+
+    .bg-content h1 {
+      font-size: 2rem;
+      color: #ffd700;
+      text-shadow: 0 0 10px cyan;
+    }
+
+    .bg-content p {
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+
+    /* ---------- DRAGGABLE WIDGET (FULL FIX) ---------- */
+    .floating-widget {
+      position: fixed;
+      z-index: 10000;
+      will-change: left, top;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,0.7));
+    }
+
+    #mini {
+      width: 65px;
+      height: 65px;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.05s linear;
+    }
+    #mini:active {
+      cursor: grabbing;
+    }
+    #mini img {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 20px rgba(0,240,255,0.8);
+      background: #000;
+      pointer-events: none;
+      object-fit: cover;
+    }
+
+    #main {
+      width: 220px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(10,10,10,0.98);
+      backdrop-filter: blur(2px);
+      position: relative;
+      display: none;
+      flex-direction: column;
+      border: 1px solid rgba(255,215,0,0.3);
+      box-shadow: 0 0 40px rgba(0,212,255,0.2);
+      animation: popIn 0.2s ease-out;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .drag-header-area {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: grab;
+      flex: 1;
+    }
+    .drag-header-area:active {
+      cursor: grabbing;
+    }
+    .title {
+      font-size: 9px;
+      color: #ffd700;
+      letter-spacing: 1px;
+      font-weight: 900;
+    }
+    .live {
+      width: 7px;
+      height: 7px;
+      background: #00ffcc;
+      border-radius: 50%;
+      box-shadow: 0 0 12px #00ffcc;
+      animation: blink 1s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0.2; } }
+    .close-btn {
+      color: #ff0044;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      width: 22px;
+      text-align: center;
+    }
+    .close-btn:active { transform: scale(0.9); }
+
+    .display {
+      height: 90px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      position: relative;
+      background: linear-gradient(135deg,#0a0a0a,#111);
+      border: 1px solid rgba(255,255,255,0.05);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    .scan-line {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg,transparent,#00f0ff,#ffd700,transparent);
+      box-shadow: 0 0 15px #00f0ff;
+      animation: scanMove 2s linear infinite;
+    }
+    @keyframes scanMove { 0% { top: 0%; } 100% { top: 100%; } }
+    .proc-ring {
+      width: 55px;
+      height: 55px;
+      border-radius: 50%;
+      border: 2px dashed #ffd700;
+      position: absolute;
+      animation: rotateAura 2s linear infinite;
+      display: none;
+    }
+    @keyframes rotateAura { 100% { transform: rotate(360deg); } }
+    .value {
+      font-size: 24px;
+      color: #fff;
+      text-shadow: 0 0 10px #00f0ff,0 0 25px #00f0ff;
+      z-index: 5;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .val-glitch { color:#ffd700; animation: glitch 0.2s infinite; }
+    @keyframes glitch {
+      0% { transform: translate(0.5px,-0.5px);}
+      50% { transform: translate(-0.5px,0.5px);}
+      100% { transform: translate(0);}
+    }
+    .sub {
+      font-family:'Rajdhani',sans-serif;
+      font-size:9px;
+      color:#aaa;
+      margin-top:5px;
+    }
+    .btn {
+      width:100%;
+      padding:9px;
+      border:none;
+      border-radius:8px;
+      background:linear-gradient(90deg,#ffd700,#00f0ff);
+      color:#000;
+      font-family:'Orbitron',sans-serif;
+      font-size:10px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 0 15px rgba(0,240,255,0.5);
+      transition:0.2s;
+    }
+    .btn:active { transform:scale(0.95); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .footer {
+      display:flex;
+      justify-content:space-between;
+      margin-top:8px;
+      font-family:'Rajdhani',sans-serif;
+      font-size:8px;
+      color:#00f0ff;
+      opacity:0.8;
+    }
+
+    @keyframes popIn {
+      0% { opacity:0; transform:scale(0.85); }
+      100% { opacity:1; transform:scale(1); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN MODAL -->
+<div id="loginOverlay" class="login-overlay">
+  <div class="login-card">
+    <h2>⚡ AUTHENTICATE ⚡</h2>
+    <div class="input-group">
+      <input type="text" id="loginUsername" placeholder="USERNAME" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <input type="password" id="loginPassword" placeholder="PASSWORD">
+    </div>
+    <button class="login-btn" id="doLoginBtn">⟁ UNLOCK PANEL ⟁</button>
+    <div id="loginError" class="error-msg"></div>
+  </div>
+</div>
+
+<!-- BACKGROUND SITE -->
+<div id="backgroundSite" class="background-site" style="display: none;">
+  <iframe src="https://www.in999qq.com/#/register?invitationCode=586156947517" style="width: 100%; height: 100%; border: none; border-radius: 28px;"></iframe>
+</div>
+<div id="widgetRoot" style="position:fixed; top:0; left:0; z-index:10000;"></div>
+
+<script>
+  (function(){
+    // ---------- CORE WIDGET LOGIC (fully functional + drag) ----------
+    let state = 'wingo';
+    let resStore = {};
+    let latestIssue = null;
+    let isFetching = false;
+
+    // Helper functions
+    function getP(){
+      const d = new Date();
+      const y = d.getUTCFullYear();
+      const m = String(d.getUTCMonth()+1).padStart(2,'0');
+      const dt = String(d.getUTCDate()).padStart(2,'0');
+      const totalMins = (d.getUTCHours()*60)+d.getUTCMinutes();
+      return `${y}${m}${dt}1000${10001+totalMins}`;
+    }
+
+    function getSize(n){
+      let num = parseInt(n,10);
+      if(isNaN(num)){
+        let sum = String(n).split('').reduce((a,b)=>a+parseInt(b,10),0);
+        num = sum % 10;
+      }
+      if(num>=0 && num<=4) return 'SMALL';
+      if(num>=5 && num<=9) return 'BIG';
+      return (num%2===0) ? 'SMALL' : 'BIG';
+    }
+
+    function parseLatestIssue(data){
+      let list = null;
+      if(data && data.data){
+        if(Array.isArray(data.data)) list = data.data;
+        else if(data.data.list && Array.isArray(data.data.list)) list = data.data.list;
+        else if(data.data.rows && Array.isArray(data.data.rows)) list = data.data.rows;
+        else if(data.data.records && Array.isArray(data.data.records)) list = data.data.records;
+        else if(Array.isArray(data.data.data)) list = data.data.data;
+      }
+      if(!list && data && Array.isArray(data.list)) list = data.list;
+      if(!list && data && Array.isArray(data.rows)) list = data.rows;
+      if(!list && data && Array.isArray(data.data)) list = data.data;
+      if(!list && Array.isArray(data)) list = data;
+      if(!list || list.length===0) return null;
+      const sorted = list.slice().sort((a,b)=>{
+        let ai = a.issue || a.issueNumber || a.period || a.issueNo || a.round || '';
+        let bi = b.issue || b.issueNumber || b.period || b.issueNo || b.round || '';
+        return String(bi).localeCompare(String(ai));
+      });
+      const latest = sorted[0];
+      const issue = latest.issue || latest.issueNumber || latest.period || latest.issueNo || latest.round || 'UNKNOWN';
+      const number = latest.number || latest.result || latest.code || latest.value || latest.open || '';
+      return { issue: String(issue), number: String(number) };
+    }
+
+    async function fetchResult(){
+      if(isFetching) return;
+      isFetching = true;
+      state = 'scanning';
+      render();
+      const btn = document.getElementById('btn-exec');
+      if(btn) btn.disabled = true;
+      try{
+        const ts = Date.now();
+        const url = `https://draw.ar-lottery01.com/WinGo/WinGo_1M/GetHistoryIssuePage.json?ts=${ts}`;
+        const resp = await fetch(url, { method:'GET', mode:'cors', cache:'no-cache' });
+        if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+        const data = await resp.json();
+        const parsed = parseLatestIssue(data);
+        if(parsed && parsed.number && parsed.number !== ''){
+          const sz = getSize(parsed.number);
+          const resultStr = `${sz} ${parsed.number}`;
+          const cacheKey = parsed.issue;
+          if(resStore[cacheKey]){
+            state = 'result';
+            latestIssue = parsed;
+            render();
+          } else {
+            resStore = {};
+            resStore[cacheKey] = { out: resultStr, p: parsed.issue, number: parsed.number, size: sz };
+            latestIssue = parsed;
+            state = 'result';
+            render();
+            // optional speech
+            if(window.TeamBridge && typeof window.TeamBridge.speak === 'function') window.TeamBridge.speak(resultStr);
+          }
+        } else {
+          state = 'wingo';
+          const valDiv = document.getElementById('val');
+          if(valDiv) valDiv.innerText = 'NO DATA';
+          const subDiv = document.getElementById('sub');
+          if(subDiv) subDiv.innerText = 'TRY AGAIN';
+          render();
+        }
+      } catch(e){
+        console.error(e);
+        state = 'wingo';
+        const valDiv = document.getElementById('val');
+        if(valDiv) valDiv.innerText = 'API ERR';
+        const subDiv = document.getElementById('sub');
+        if(subDiv) subDiv.innerText = e.message || 'CHECK NET';
+        render();
+      }
+      isFetching = false;
+      if(btn) btn.disabled = false;
+      setTimeout(()=>{ if(state==='result' && latestIssue) render(); }, 300);
+    }
+
+    function openM(){
+      const mainDiv = document.getElementById('main');
+      const miniDiv = document.getElementById('mini');
+      if(mainDiv) mainDiv.style.display = 'flex';
+      if(miniDiv) miniDiv.style.display = 'none';
+      render();
+    }
+
+    function closeM(){
+      const mainDiv = document.getElementById('main');
+      const miniDiv = document.getElementById('mini');
+      if(mainDiv) mainDiv.style.display = 'none';
+      if(miniDiv) miniDiv.style.display = 'flex';
+    }
+
+    function render(){
+      const v = document.getElementById('val');
+      const s = document.getElementById('sub');
+      const b = document.getElementById('btn-exec');
+      const r = document.getElementById('proc-ring');
+      if(!v) return;
+      if(r) r.style.display = 'none';
+      v.className = 'value';
+      if(b) b.disabled = false;
+      if(state === 'scanning'){
+        v.className = 'value val-glitch';
+        v.innerText = 'SYNCING';
+        if(s) s.innerText = 'FETCHING API...';
+        if(b) { b.innerText = 'WAIT'; b.disabled = true; }
+        if(r) r.style.display = 'block';
+      } else if(state === 'result' && latestIssue && resStore[latestIssue.issue]){
+        const cached = resStore[latestIssue.issue];
+        v.innerText = cached.out;
+        if(s) s.innerText = 'PRD: '+cached.p.slice(-9);
+        if(b) { b.innerText = 'REFRESH'; b.onclick = fetchResult; }
+      } else {
+        v.innerText = 'READY';
+        if(s) s.innerText = 'TAP EXECUTE';
+        if(b) { b.innerText = 'EXECUTE'; b.onclick = fetchResult; }
+      }
+    }
+
+    // ---------- BUILD WIDGET DOM ----------
+    function buildWidget() {
+      const widgetContainer = document.createElement('div');
+      widgetContainer.id = "floatingWidgetInstance";
+      widgetContainer.className = "floating-widget";
+      widgetContainer.style.left = "calc(100% - 130px)";
+      widgetContainer.style.top = "calc(100% - 160px)";
+      widgetContainer.style.bottom = "auto";
+      widgetContainer.style.right = "auto";
+
+      widgetContainer.innerHTML = `
+        <div id="mini" class="drag-handle-mini">
+          <img src="mohit.jpg" alt="icon" onerror="this.src='https://placehold.co/64x64/111/ffd700?text=VIP'">
+        </div>
+        <div id="main">
+          <div class="header">
+            <div class="drag-header-area" id="dragHeaderHandle">
+              <div class="live"></div>
+              <div class="title">Mohit Vip Pannel</div>
+            </div>
+            <div class="close-btn" id="customCloseBtn">✖</div>
+          </div>
+          <div class="display">
+            <div class="scan-line"></div>
+            <div id="proc-ring" class="proc-ring"></div>
+            <div id="val" class="value">READY</div>
+            <div id="sub" class="sub">TAP EXECUTE</div>
+          </div>
+          <button id="btn-exec" class="btn">EXECUTE</button>
+          <div class="footer">
+            <span>PROXY: SECURE</span>
+            <span id="ping">PING: 25ms</span>
+          </div>
+        </div>
+      `;
+
+      const root = document.getElementById('widgetRoot');
+      root.innerHTML = '';
+      root.appendChild(widgetContainer);
+      
+      // Attach event handlers
+      const miniEl = document.getElementById('mini');
+      const closeBtn = document.getElementById('customCloseBtn');
+      if(miniEl) miniEl.onclick = (e) => { e.stopPropagation(); openM(); };
+      if(closeBtn) closeBtn.onclick = (e) => { e.stopPropagation(); closeM(); };
+      
+      // Ping simulation
+      setInterval(() => {
+        const pingSpan = document.getElementById('ping');
+        if(pingSpan) pingSpan.innerText = 'PING: '+(Math.floor(Math.random()*30)+15)+'ms';
+      }, 2000);
+      
+      render();
+      return widgetContainer;
+    }
+
+    // ---------- DRAG SYSTEM (touch + mouse, robust, no conflicts) ----------
+    let activeDrag = false;
+    let dragStartX = 0, dragStartY = 0;
+    let dragElemLeft = 0, dragElemTop = 0;
+    let dragHasMoved = false;
+    let dragElement = null;
+
+    function initDragForWidget(widgetDiv) {
+      if(!widgetDiv) return;
+      
+      // Define draggable handles (mini and header area)
+      const miniHandle = document.getElementById('mini');
+      const headerHandle = document.getElementById('dragHeaderHandle');
+      const handles = [];
+      if(miniHandle) handles.push(miniHandle);
+      if(headerHandle) handles.push(headerHandle);
+      
+      function onPointerStart(e) {
+        // ignore if target is button, close button, or interactive inside main panel when visible
+        let target = e.target;
+        if(target.closest && (target.closest('.btn') || target.closest('.close-btn'))) return;
+        // allow dragging only on handles
+        let isHandle = false;
+        for(let h of handles){
+          if(h === target || h.contains(target)) { isHandle = true; break; }
+        }
+        if(!isHandle) return;
+        
+        e.preventDefault();
+        activeDrag = true;
+        dragHasMoved = false;
+        dragElement = widgetDiv;
+        
+        const rect = dragElement.getBoundingClientRect();
+        dragElemLeft = rect.left;
+        dragElemTop = rect.top;
+        
+        let clientX, clientY;
+        if(e.type === 'mousedown') {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        } else if(e.touches) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+        } else return;
+        
+        dragStartX = clientX;
+        dragStartY = clientY;
+        
+        // attach move/up events
+        if(e.type === 'mousedown') {
+          window.addEventListener('mousemove', onMove);
+          window.addEventListener('mouseup', onUp);
+        } else {
+          window.addEventListener('touchmove', onMove, { passive: false });
+          window.addEventListener('touchend', onUp);
+          window.addEventListener('touchcancel', onUp);
+        }
+      }
+      
+      function onMove(e) {
+        if(!activeDrag) return;
+        let clientX, clientY;
+        if(e.type === 'mousemove') {
+          clientX = e.clientX;
+          clientY = e.clientY;
+        } else if(e.touches) {
+          clientX = e.touches[0].clientX;
+          clientY = e.touches[0].clientY;
+          e.preventDefault();
+        } else return;
+        
+        const deltaX = clientX - dragStartX;
+        const deltaY = clientY - dragStartY;
+        if(!dragHasMoved && (Math.abs(deltaX) > 4 || Math.abs(deltaY) > 4)) {
+          dragHasMoved = true;
+        }
+        if(dragHasMoved && dragElement) {
+          let newLeft = dragElemLeft + deltaX;
+          let newTop = dragElemTop + deltaY;
+          // boundaries
+          const winW = window.innerWidth;
+          const winH = window.innerHeight;
+          const w = dragElement.offsetWidth;
+          const h = dragElement.offsetHeight;
+          newLeft = Math.min(Math.max(newLeft, 5), winW - w - 5);
+          newTop = Math.min(Math.max(newTop, 5), winH - h - 5);
+          dragElement.style.left = newLeft + 'px';
+          dragElement.style.top = newTop + 'px';
+          dragElement.style.bottom = 'auto';
+          dragElement.style.right = 'auto';
+        }
+      }
+      
+      function onUp(e) {
+        if(!activeDrag) return;
+        activeDrag = false;
+        // clean up events
+        window.removeEventListener('mousemove', onMove);
+        window.removeEventListener('mouseup', onUp);
+        window.removeEventListener('touchmove', onMove);
+        window.removeEventListener('touchend', onUp);
+        window.removeEventListener('touchcancel', onUp);
+        // if drag never moved, then it's just a click, we allow original click to open/close
+        // but original onclick already handles, so no extra action needed.
+        setTimeout(() => { dragHasMoved = false; }, 50);
+      }
+      
+      for(let h of handles) {
+        if(!h) continue;
+        h.addEventListener('mousedown', onPointerStart);
+        h.addEventListener('touchstart', onPointerStart, { passive: false });
+        // style
+        h.style.cursor = 'grab';
+      }
+    }
+    
+    // ---------- LOGIN HANDLER ----------
+    const loginOverlay = document.getElementById('loginOverlay');
+    const loginBtn = document.getElementById('doLoginBtn');
+    const usernameField = document.getElementById('loginUsername');
+    const passwordField = document.getElementById('loginPassword');
+    const errorSpan = document.getElementById('loginError');
+    const backgroundSite = document.getElementById('backgroundSite');
+    
+    function performLogin() {
+      const user = usernameField.value.trim();
+      const pass = passwordField.value.trim();
+      if(user === 'mohit' && pass === 'mohit123') {
+        loginOverlay.style.display = 'none';
+        backgroundSite.style.display = 'flex';
+        // Build widget and activate drag
+        const widgetDiv = buildWidget();
+        initDragForWidget(widgetDiv);
+        // Additional safety: make sure initial open/close doesn't conflict with drag.
+        // Force re-assign mini click again to avoid event loss
+        const miniCheck = document.getElementById('mini');
+        if(miniCheck) {
+          miniCheck.onclick = (e) => { e.stopPropagation(); if(!activeDrag) openM(); };
+        }
+        const closeButton = document.getElementById('customCloseBtn');
+        if(closeButton) closeButton.onclick = (e) => { e.stopPropagation(); closeM(); };
+        // Also ensure that if any internal button is clicked, no drag triggers (already protected)
+        // Fix: adjust header drag area toggle open on double click? Not needed.
+        // Force first render
+        render();
+      } else {
+        errorSpan.innerText = '⛔ ACCESS DENIED ⛔\nUse admin / admin123';
+      }
+    }
+    
+    loginBtn.addEventListener('click', performLogin);
+    usernameField.addEventListener('keypress', (e) => { if(e.key === 'Enter') performLogin(); });
+    passwordField.addEventListener('keypress', (e) => { if(e.key === 'Enter') performLogin(); });
+    
+    // Preload fake ping to avoid console noise
+  })();
+</script>
+</body>
+</html>
